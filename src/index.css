@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  html {
+    background: #0a0a0b;
+    color: #f5f3ef;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    margin: 0;
+    overscroll-behavior: none;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  button,
+  a,
+  input,
+  label {
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .h-screen-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}
+
+@keyframes sheet {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ring {
+  from {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes sweep {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes shutter {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Range inputs: big thumb for thumbs. */
+input[type='range'].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 44px;
+}
+input[type='range'].slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+input[type='range'].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 26px;
+  width: 26px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+input[type='range'].slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+input[type='range'].slider::-moz-range-thumb {
+  height: 26px;
+  width: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}

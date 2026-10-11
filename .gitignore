@@ -1,0 +1,11 @@
+node_modules
+dist
+dev-dist
+coverage
+test-results
+playwright-report
+*.local
+.DS_Store
+# copied from node_modules by scripts/copy-assets.mjs
+public/mediapipe/
+public/fonts/DSEG7Classic-Bold.woff2
