@@ -7,9 +7,14 @@ export type Delegate = 'GPU' | 'CPU';
 
 export interface Detectors {
   delegate: Delegate;
-  /** Raw-frame (un-mirrored) candidates. */
-  faces(video: HTMLVideoElement, ts: number): Candidate[];
-  objects(video: HTMLVideoElement, ts: number): Candidate[];
+  /**
+   * Raw-frame (un-mirrored) candidates, normalised 0..1. The frame is a 2D
+   * canvas copy of the video, not the <video> itself: iOS Safari can upload
+   * camera video to WebGL flipped, which put the reticle on the mirror image
+   * of the subject and inverted every direction. Canvas uploads are reliable.
+   */
+  faces(frame: HTMLCanvasElement, ts: number): Candidate[];
+  objects(frame: HTMLCanvasElement, ts: number): Candidate[];
   close(): void;
 }
 
@@ -103,16 +108,16 @@ export async function loadDetectors(): Promise<Detectors> {
     get delegate() {
       return delegate;
     },
-    faces(video, t) {
+    faces(frame, t) {
       return guard(() => {
-        const r = models.faces.detectForVideo(video, ts(t));
-        return toCandidates(r.detections, video.videoWidth, video.videoHeight, () => 'face');
+        const r = models.faces.detectForVideo(frame, ts(t));
+        return toCandidates(r.detections, frame.width, frame.height, () => 'face');
       }, []);
     },
-    objects(video, t) {
+    objects(frame, t) {
       return guard(() => {
-        const r = models.objects.detectForVideo(video, ts(t));
-        return toCandidates(r.detections, video.videoWidth, video.videoHeight, (d) =>
+        const r = models.objects.detectForVideo(frame, ts(t));
+        return toCandidates(r.detections, frame.width, frame.height, (d) =>
           d.categories?.[0]?.categoryName === 'person' ? 'person' : 'object',
         );
       }, []);

@@ -34,6 +34,8 @@ type VideoWithRVFC = HTMLVideoElement & {
 };
 
 const E = GUIDANCE.exposure;
+/** Long side of the frame handed to the detectors (models run at ≤320 px anyway). */
+const DETECT_SIDE = 640;
 
 /**
  * The live composition coach. Runs detection at a throttled rate off the
@@ -61,6 +63,8 @@ export class Coach {
   private tickNo = 0;
   private faces: { c: Candidate[]; t: number } = { c: [], t: 0 };
   private objects: { c: Candidate[]; t: number } = { c: [], t: 0 };
+  private frame: HTMLCanvasElement | null = null;
+  private frameCtx: CanvasRenderingContext2D | null = null;
   private sample: HTMLCanvasElement | null = null;
   private sampleCtx: CanvasRenderingContext2D | null = null;
   private luma: Uint8Array | undefined;
@@ -91,8 +95,11 @@ export class Coach {
     }
     this.handle = 0;
     releaseCanvas(this.sample);
+    releaseCanvas(this.frame);
     this.sample = null;
     this.sampleCtx = null;
+    this.frame = null;
+    this.frameCtx = null;
   }
 
   setGuidance(on: boolean) {
@@ -164,6 +171,20 @@ export class Coach {
     }
   }
 
+  /** Upright copy of the full (un-zoomed, un-mirrored) video frame for the detectors. */
+  private detectionFrame(v: HTMLVideoElement): HTMLCanvasElement {
+    const k = Math.min(1, DETECT_SIDE / Math.max(v.videoWidth, v.videoHeight));
+    const w = Math.max(1, Math.round(v.videoWidth * k));
+    const h = Math.max(1, Math.round(v.videoHeight * k));
+    if (!this.frame || this.frame.width !== w || this.frame.height !== h) {
+      releaseCanvas(this.frame);
+      this.frame = createCanvas(w, h);
+      this.frameCtx = context2d(this.frame);
+    }
+    this.frameCtx!.drawImage(v, 0, 0, w, h);
+    return this.frame;
+  }
+
   private sampleFrame(v: HTMLVideoElement): Uint8Array | null {
     const portrait = v.videoHeight > v.videoWidth;
     const w = portrait ? E.sampleHeight : E.sampleWidth;
@@ -200,8 +221,9 @@ export class Coach {
     const t = performance.now();
     if (this.detectors) {
       // Alternate detectors to keep each tick's main-thread cost small.
-      if (this.tickNo++ % 2 === 0) this.objects = { c: this.detectors.objects(v, t), t: now };
-      else this.faces = { c: this.detectors.faces(v, t), t: now };
+      const frame = this.detectionFrame(v);
+      if (this.tickNo++ % 2 === 0) this.objects = { c: this.detectors.objects(frame, t), t: now };
+      else this.faces = { c: this.detectors.faces(frame, t), t: now };
     }
     const fresh = (r: { c: Candidate[]; t: number }) => (now - r.t < 600 ? r.c : []);
     const toDisplay = (c: Candidate): Candidate | null => {
