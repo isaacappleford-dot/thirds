@@ -150,7 +150,9 @@ export default function EditorScreen({ id }: { id: string }) {
         const look = getLook(recipe.look);
         const intensity = comparing || recipe.look === 'original' ? 0 : recipe.intensity;
         r.render(look.params, intensity, recipe.seed, s.preview.width, s.preview.height);
-        void composeInto(view, { graded: r.canvas, photoW: s.preview.width, photoH: s.preview.height, recipe, takenAt: new Date(rec.takenAt) });
+        composeInto(view, { graded: r.canvas, photoW: s.preview.width, photoH: s.preview.height, recipe, takenAt: new Date(rec.takenAt) }).catch((e: Error) =>
+          setError(e.message || 'Rendering failed.'),
+        );
       } catch (e) {
         setError((e as Error).message || 'Rendering failed.');
       }
@@ -232,6 +234,7 @@ export default function EditorScreen({ id }: { id: string }) {
           onPointerLeave={() => setComparing(false)}
           onPointerCancel={() => setComparing(false)}
           onContextMenu={(e) => e.preventDefault()}
+          style={{ WebkitTouchCallout: 'none' }}
         />
         {comparing && <span className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[13px]">Original</span>}
       </div>

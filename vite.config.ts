@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     appIdentity(),
     mode === 'https' ? basicSsl() : null,
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['icons/*.png', 'icons/logo.svg', 'fonts/*.woff2'],
       manifest: {

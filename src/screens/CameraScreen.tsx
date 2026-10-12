@@ -120,6 +120,9 @@ export default function CameraScreen() {
   }, [coach, session, facing, mirrored, digitalZoom, features]);
 
   useEffect(() => coach.setGuidance(settings.guidance), [coach, settings.guidance]);
+  useEffect(() => {
+    coach.level = settings.level;
+  }, [coach, settings.level]);
 
   useEffect(
     () =>
@@ -319,7 +322,11 @@ export default function CameraScreen() {
 
   const runScan = async () => {
     void requestMotionPermission();
-    if (!settings.guidance) setSettings({ guidance: true });
+    if (!settings.guidance) {
+      // Turn the coach on now, not on the next render, so the scan sees real frames.
+      coach.setGuidance(true);
+      setSettings({ guidance: true });
+    }
     setScanResult(null);
     setScanResult(await coach.scan());
   };

@@ -46,6 +46,8 @@ export class Coach {
   view: CoachView = { facing: 'environment', mirrored: false, digitalZoom: 1 };
   caps: Capabilities = { canZoom: true, canExposure: false };
   guidance = true;
+  /** When false, sensor data is ignored (no straighten / eye-level / flat-lay advice). */
+  level = true;
 
   private tracker = new SubjectTracker();
   private stabilizer = new InstructionStabilizer();
@@ -53,6 +55,8 @@ export class Coach {
   private video: VideoWithRVFC | null = null;
   private running = false;
   private handle = 0;
+  /** Which scheduler `handle` belongs to, so stop() never cancels someone else's rAF. */
+  private handleKind: 'rvfc' | 'raf' = 'raf';
   private lastTick = 0;
   private tickNo = 0;
   private faces: { c: Candidate[]; t: number } = { c: [], t: 0 };
@@ -82,8 +86,8 @@ export class Coach {
     this.running = false;
     const v = this.video;
     if (v && this.handle) {
-      if (v.cancelVideoFrameCallback) v.cancelVideoFrameCallback(this.handle);
-      cancelAnimationFrame(this.handle);
+      if (this.handleKind === 'rvfc') v.cancelVideoFrameCallback?.(this.handle);
+      else cancelAnimationFrame(this.handle);
     }
     this.handle = 0;
     releaseCanvas(this.sample);
@@ -151,7 +155,13 @@ export class Coach {
       }
       this.schedule();
     };
-    this.handle = v.requestVideoFrameCallback ? v.requestVideoFrameCallback(cb) : requestAnimationFrame(cb);
+    if (v.requestVideoFrameCallback) {
+      this.handleKind = 'rvfc';
+      this.handle = v.requestVideoFrameCallback(cb);
+    } else {
+      this.handleKind = 'raf';
+      this.handle = requestAnimationFrame(cb);
+    }
   }
 
   private sampleFrame(v: HTMLVideoElement): Uint8Array | null {
@@ -178,10 +188,11 @@ export class Coach {
     const space: SpaceInfo = { mirrored: this.view.mirrored, digitalZoom: this.view.digitalZoom };
     const aspect = v.videoWidth / v.videoHeight;
     const prev = this.state.analysis;
+    const attitude = this.level ? this.attitude : null;
 
     if (!this.guidance) {
       // Level only: no detection, no sampling.
-      const analysis = analyzeFrame({ subject: null, view: { aspect, facing: this.view.facing, mirrored: this.view.mirrored }, attitude: this.attitude, exposure: null, personInFrame: false, prev });
+      const analysis = analyzeFrame({ subject: null, view: { aspect, facing: this.view.facing, mirrored: this.view.mirrored }, attitude, exposure: null, personInFrame: false, prev });
       this.publish({ analysis, instruction: null, subject: null, tracks: [] });
       return;
     }
@@ -216,7 +227,7 @@ export class Coach {
     const analysis = analyzeFrame({
       subject,
       view: { aspect, facing: this.view.facing, mirrored: this.view.mirrored },
-      attitude: this.attitude,
+      attitude,
       exposure,
       personInFrame,
       prev,

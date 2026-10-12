@@ -68,6 +68,11 @@ export default function ViewerScreen({ id }: { id: string }) {
     scroller.current.scrollLeft = i * scroller.current.clientWidth;
   }, [ids, id]);
 
+  // After a delete the list shrinks; keep the index on a real photo.
+  useEffect(() => {
+    if (ids && ids.length > 0 && index > ids.length - 1) setIndex(ids.length - 1);
+  }, [ids, index]);
+
   const onScroll = () => {
     const el = scroller.current;
     if (!el || !ids) return;

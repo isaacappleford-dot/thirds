@@ -22,15 +22,17 @@ export function InstructionPill({ instruction, onAction }: { instruction: Instru
           className={`pointer-events-auto flex min-h-[40px] max-w-full items-center gap-2 rounded-full py-1.5 pl-3 text-[14px] font-medium shadow-lg backdrop-blur-md motion-safe:animate-[fadein_200ms_ease-out] ${
             instruction.id === 'locked' ? 'bg-lock/90 text-ink' : 'bg-black/55 text-white'
           } ${instruction.action ? 'pr-1.5' : 'pr-4'}`}
-          aria-hidden="true"
         >
           {instruction.arrow !== undefined && instruction.id === 'move' && (
-            <span style={{ transform: `rotate(${instruction.arrow}deg)` }} className="inline-flex transition-transform duration-300">
+            <span aria-hidden="true" style={{ transform: `rotate(${instruction.arrow}deg)` }} className="inline-flex transition-transform duration-300">
               <Icon name="arrow" size={18} strokeWidth={2.4} />
             </span>
           )}
           {instruction.id === 'locked' && <Icon name="check" size={18} strokeWidth={2.4} />}
-          <span className="truncate">{instruction.text}</span>
+          {/* The text is announced by the live region above; hide the copy from screen readers. */}
+          <span className="truncate" aria-hidden="true">
+            {instruction.text}
+          </span>
           {instruction.action && (
             <button
               type="button"

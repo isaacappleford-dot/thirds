@@ -16,10 +16,19 @@ export function needsMotionPermission(): boolean {
 }
 
 let granted: boolean | null = null;
+let inFlight: Promise<boolean> | null = null;
 
 /** Call from a user gesture (tap). Resolves true if orientation events will flow. */
-export async function requestMotionPermission(): Promise<boolean> {
-  if (granted !== null) return granted;
+export function requestMotionPermission(): Promise<boolean> {
+  if (granted !== null) return Promise.resolve(granted);
+  // Several taps can arrive at once (capture + bubble handlers): ask only once.
+  inFlight ??= askMotionPermission().finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
+}
+
+async function askMotionPermission(): Promise<boolean> {
   const fns = requestFns();
   if (fns.length === 0) return (granted = true);
   try {
